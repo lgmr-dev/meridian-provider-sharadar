@@ -1,0 +1,71 @@
+{
+  "description": "Sanitized structural snapshot of live AAPL Sharadar Tables responses; all financial values are synthetic.",
+  "sf1": [
+    {
+      "datekey": "2025-01-31",
+      "dimension": "MRY",
+      "eps": 5.0,
+      "epsdil": null,
+      "reportperiod": "2024-12-31",
+      "revenue": 110.0,
+      "ticker": "AAPL"
+    },
+    {
+      "datekey": "2024-01-31",
+      "dimension": "MRY",
+      "eps": 4.0,
+      "epsdil": 3.9,
+      "reportperiod": "2023-12-31",
+      "revenue": 100.0,
+      "ticker": "AAPL"
+    }
+  ],
+  "sep": [
+    {
+      "close": 101.0,
+      "closeadj": 101.0,
+      "date": "2024-01-03",
+      "ticker": "AAPL",
+      "volume": 900000
+    },
+    {
+      "close": 100.0,
+      "closeadj": 100.0,
+      "date": "2024-01-02",
+      "ticker": "AAPL",
+      "volume": 1000000
+    }
+  ],
+  "tickers": [
+    {
+      "category": "Domestic Common Stock",
+      "currency": "USD",
+      "exchange": "NASDAQ",
+      "isdelisted": "N",
+      "name": "APPLE INC",
+      "permaticker": 1,
+      "table": "SF2",
+      "ticker": "AAPL"
+    },
+    {
+      "category": "Domestic Common Stock",
+      "currency": "USD",
+      "exchange": "NASDAQ",
+      "isdelisted": "N",
+      "name": "APPLE INC",
+      "permaticker": 1,
+      "table": "SF1",
+      "ticker": "AAPL"
+    },
+    {
+      "category": "Domestic Common Stock",
+      "currency": "USD",
+      "exchange": "NASDAQ",
+      "isdelisted": "N",
+      "name": "APPLE INC",
+      "permaticker": 1,
+      "table": "SEP",
+      "ticker": "AAPL"
+    }
+  ]
+}

@@ -1,0 +1,751 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Meridian market-data plug-in",
+    "version": "1.0.0",
+    "summary": "Operations of a market-data provider plug-in.",
+    "description": "A market-data plug-in implements the plug-in runtime contract (../../plugin-runtime/v1/openapi.json) and the operations of this file. Each operation is POST /v1/<operationId> with a JSON body. A manifest lists the operations that the plug-in supports. Decimals are strings (Decimal) and a missing value is null. A source failure is an RFC 9457 problem of type source_unavailable (transport failure) or source_invalid (integrity failure); the contract never hides a failure as data. The one exception is the error field of fund_fundamentals, because the host needs attempted_at. A query with no rows, also for an unknown ticker, is a table with zero rows. The requests of statements, info, dividends, validate and prices carry max_age_hours: the plug-in does not use a raw cache entry that is older. prices and the beta price windows of info never use a raw price entry older than 24 hours. fund_fundamentals never serves a raw entry older than 24 hours.",
+    "license": {
+      "name": "Apache-2.0",
+      "identifier": "Apache-2.0"
+    }
+  },
+  "security": [
+    {
+      "bearer": []
+    }
+  ],
+  "paths": {
+    "/v1/prices": {
+      "post": {
+        "operationId": "prices",
+        "summary": "Daily prices of one ticker",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PricesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Table columns: Date (date, not null), Open, High, Low (decimal, nullable), Close (decimal, not null), Adj Close (decimal, not null), Volume (decimal, nullable). The plug-in reads the ticker metadata first, with max_age_hours, and fails closed when it cannot give price_currency.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PricesResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/v1/statements": {
+      "post": {
+        "operationId": "statements",
+        "summary": "Income, balance-sheet or cash-flow statements",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatementsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Table columns: period_end (date, not null) and one nullable decimal column for each label of the kind (StatementLabels).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/v1/info": {
+      "post": {
+        "operationId": "info",
+        "summary": "Descriptive fields of one ticker",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InfoRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Each field is nullable. A failed beta removes only beta. A failed metadata read gives the fallback fields.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InfoResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/v1/validate": {
+      "post": {
+        "operationId": "validate",
+        "summary": "Check that a ticker exists",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TickerRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The validation result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidateResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/v1/dividends": {
+      "post": {
+        "operationId": "dividends",
+        "summary": "Annual fiscal dividends per share",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TickerRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Table columns: period_end (date, not null) and dps (decimal, nullable). A period with missing inputs has dps null. A missing report period is a source_invalid problem. The kind is annual_fiscal.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/v1/fund_fundamentals": {
+      "post": {
+        "operationId": "fund_fundamentals",
+        "summary": "Fundamentals of one listed real-estate fund",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FundRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The fund fields. A source failure sets error and keeps attempted_at. The host checks identity, age, bounds and the hash in core.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FundResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/v1/validateCredentials": {
+      "post": {
+        "operationId": "validateCredentials",
+        "summary": "Check a candidate secret before the host stores it",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The plug-in never persists or logs a candidate.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CredentialsResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "responses": {
+      "Problem": {
+        "description": "An RFC 9457 problem. The source failure types are source_unavailable and source_invalid.",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/SourceProblem"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "SourceProblem": {
+        "allOf": [
+          {
+            "$ref": "../../plugin-runtime/v1/openapi.json#/components/schemas/Problem"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "description": "urn:meridian:market-data:source_unavailable for a transport failure, urn:meridian:market-data:source_invalid for an integrity failure, or another problem type of the runtime contract."
+              }
+            }
+          }
+        ]
+      },
+      "Ticker": {
+        "type": "string",
+        "pattern": "^[A-Z0-9.\\-^]+$",
+        "maxLength": 32
+      },
+      "MaxAgeHours": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 8760,
+        "description": "The plug-in does not use a raw cache entry that is older."
+      },
+      "TickerRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ticker", "max_age_hours"],
+        "properties": {
+          "ticker": {
+            "$ref": "#/components/schemas/Ticker"
+          },
+          "max_age_hours": {
+            "$ref": "#/components/schemas/MaxAgeHours"
+          }
+        }
+      },
+      "PricesRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ticker", "start", "force_refresh", "max_age_hours"],
+        "properties": {
+          "ticker": {
+            "$ref": "#/components/schemas/Ticker"
+          },
+          "start": {
+            "oneOf": [
+              {
+                "$ref": "../../plugin-runtime/v1/openapi.json#/components/schemas/Date"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "force_refresh": {
+            "type": "boolean"
+          },
+          "max_age_hours": {
+            "$ref": "#/components/schemas/MaxAgeHours"
+          }
+        }
+      },
+      "StatementsRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ticker", "kind", "max_age_hours"],
+        "properties": {
+          "ticker": {
+            "$ref": "#/components/schemas/Ticker"
+          },
+          "kind": {
+            "enum": ["income", "balance", "cashflow"]
+          },
+          "max_age_hours": {
+            "$ref": "#/components/schemas/MaxAgeHours"
+          }
+        }
+      },
+      "InfoRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ticker", "beta", "max_age_hours"],
+        "properties": {
+          "ticker": {
+            "$ref": "#/components/schemas/Ticker"
+          },
+          "beta": {
+            "type": "boolean"
+          },
+          "max_age_hours": {
+            "$ref": "#/components/schemas/MaxAgeHours"
+          }
+        }
+      },
+      "FundRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ticker"],
+        "properties": {
+          "ticker": {
+            "$ref": "#/components/schemas/Ticker"
+          }
+        }
+      },
+      "CredentialsRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["secret_name", "candidate"],
+        "properties": {
+          "secret_name": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_]{0,63}$"
+          },
+          "candidate": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          }
+        }
+      },
+      "CredentialsResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["valid", "code"],
+        "properties": {
+          "valid": {
+            "type": "boolean"
+          },
+          "code": {
+            "type": ["string", "null"],
+            "description": "A stable error code when valid is false."
+          }
+        }
+      },
+      "ProviderPlugin": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "version", "contract_version", "contract_revision"],
+        "properties": {
+          "id": {
+            "$ref": "../../plugin-runtime/v1/openapi.json#/components/schemas/PluginId"
+          },
+          "version": {
+            "$ref": "../../plugin-runtime/v1/openapi.json#/components/schemas/SemVer"
+          },
+          "contract_version": {
+            "$ref": "../../plugin-runtime/v1/openapi.json#/components/schemas/SemVer"
+          },
+          "contract_revision": {
+            "type": "string"
+          }
+        }
+      },
+      "Observation": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "A source observation, schema version 2. The host unions the observations of each call.",
+        "required": ["source", "identity", "source_fetched_at", "sha256"],
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "identity": {
+            "type": "string"
+          },
+          "source_fetched_at": {
+            "$ref": "../../plugin-runtime/v1/openapi.json#/components/schemas/Timestamp"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      },
+      "Provenance": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "sha256 is the hash of the canonical JSON (sorted keys, no spaces, ASCII) of the response data.",
+        "required": ["provider_plugin", "source", "identity", "source_fetched_at", "retrieved_at", "sha256"],
+        "properties": {
+          "provider_plugin": {
+            "$ref": "#/components/schemas/ProviderPlugin"
+          },
+          "source": {
+            "type": "string"
+          },
+          "identity": {
+            "type": "string"
+          },
+          "source_fetched_at": {
+            "oneOf": [
+              {
+                "$ref": "../../plugin-runtime/v1/openapi.json#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "retrieved_at": {
+            "$ref": "../../plugin-runtime/v1/openapi.json#/components/schemas/Timestamp"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      },
+      "Envelope": {
+        "type": "object",
+        "required": ["provenance", "observations"],
+        "properties": {
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "observations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Observation"
+            }
+          }
+        }
+      },
+      "TableResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Envelope"
+          },
+          {
+            "type": "object",
+            "required": ["table"],
+            "properties": {
+              "table": {
+                "$ref": "../../plugin-runtime/v1/openapi.json#/components/schemas/Table"
+              }
+            }
+          }
+        ]
+      },
+      "PricesResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TableResponse"
+          },
+          {
+            "type": "object",
+            "required": ["price_currency"],
+            "properties": {
+              "price_currency": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Never null. The plug-in never infers it."
+              }
+            }
+          }
+        ]
+      },
+      "InfoResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Envelope"
+          },
+          {
+            "type": "object",
+            "required": ["info"],
+            "properties": {
+              "info": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "shortName": {
+                    "type": ["string", "null"]
+                  },
+                  "longName": {
+                    "type": ["string", "null"]
+                  },
+                  "sector": {
+                    "type": ["string", "null"]
+                  },
+                  "industry": {
+                    "type": ["string", "null"]
+                  },
+                  "quoteType": {
+                    "type": ["string", "null"]
+                  },
+                  "exchange": {
+                    "type": ["string", "null"]
+                  },
+                  "currency": {
+                    "type": ["string", "null"]
+                  },
+                  "financialCurrency": {
+                    "type": ["string", "null"]
+                  },
+                  "is_etf": {
+                    "type": ["boolean", "null"]
+                  },
+                  "sharesOutstanding": {
+                    "type": ["integer", "null"]
+                  },
+                  "marketCap": {
+                    "oneOf": [
+                      {
+                        "$ref": "../../plugin-runtime/v1/openapi.json#/components/schemas/Decimal"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "beta": {
+                    "oneOf": [
+                      {
+                        "$ref": "../../plugin-runtime/v1/openapi.json#/components/schemas/Decimal"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ValidateResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Envelope"
+          },
+          {
+            "type": "object",
+            "required": ["valid", "name"],
+            "properties": {
+              "valid": {
+                "type": "boolean"
+              },
+              "name": {
+                "type": ["string", "null"]
+              }
+            }
+          }
+        ]
+      },
+      "FundResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Envelope"
+          },
+          {
+            "type": "object",
+            "required": [
+              "ticker",
+              "source_url",
+              "response_url",
+              "provider_ticker",
+              "segmento",
+              "gestor",
+              "error",
+              "valor_patrimonial",
+              "p_vp",
+              "dy_12m",
+              "patrimonio_liquido",
+              "attempted_at",
+              "fetched_at",
+              "warnings"
+            ],
+            "properties": {
+              "ticker": {
+                "type": ["string", "null"]
+              },
+              "source_url": {
+                "type": ["string", "null"]
+              },
+              "response_url": {
+                "type": ["string", "null"]
+              },
+              "provider_ticker": {
+                "type": ["string", "null"]
+              },
+              "segmento": {
+                "type": ["string", "null"]
+              },
+              "gestor": {
+                "type": ["string", "null"]
+              },
+              "error": {
+                "type": ["string", "null"]
+              },
+              "valor_patrimonial": {
+                "$ref": "#/components/schemas/NullableDecimal"
+              },
+              "p_vp": {
+                "$ref": "#/components/schemas/NullableDecimal"
+              },
+              "dy_12m": {
+                "$ref": "#/components/schemas/NullableDecimal"
+              },
+              "patrimonio_liquido": {
+                "$ref": "#/components/schemas/NullableDecimal"
+              },
+              "attempted_at": {
+                "$ref": "#/components/schemas/NullableTimestamp"
+              },
+              "fetched_at": {
+                "$ref": "#/components/schemas/NullableTimestamp"
+              },
+              "warnings": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "NullableDecimal": {
+        "oneOf": [
+          {
+            "$ref": "../../plugin-runtime/v1/openapi.json#/components/schemas/Decimal"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "NullableTimestamp": {
+        "oneOf": [
+          {
+            "$ref": "../../plugin-runtime/v1/openapi.json#/components/schemas/Timestamp"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "StatementLabels": {
+        "type": "object",
+        "description": "The column labels of each statement kind, in order.",
+        "properties": {
+          "income": {
+            "const": [
+              "Total Revenue",
+              "Net Income",
+              "Net Income Common Stockholders",
+              "Gross Profit",
+              "Operating Income",
+              "EBITDA",
+              "EBIT",
+              "Basic EPS",
+              "Diluted EPS",
+              "Basic Average Shares",
+              "Diluted Average Shares",
+              "Tax Provision",
+              "Pretax Income"
+            ]
+          },
+          "balance": {
+            "const": [
+              "Total Assets",
+              "Stockholders Equity",
+              "Total Debt",
+              "Long Term Debt",
+              "Current Assets",
+              "Current Liabilities",
+              "Cash And Cash Equivalents",
+              "Cash Cash Equivalents And Short Term Investments",
+              "Ordinary Shares Number",
+              "Other Short Term Investments",
+              "Goodwill",
+              "Intangible Assets"
+            ]
+          },
+          "cashflow": {
+            "const": [
+              "Operating Cash Flow",
+              "Total Cash From Operating Activities",
+              "Capital Expenditure",
+              "Free Cash Flow",
+              "Depreciation And Amortization",
+              "Depreciation Amortization Depletion",
+              "Cash Dividends Paid",
+              "Net Debt Issuance"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

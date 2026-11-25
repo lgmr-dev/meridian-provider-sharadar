@@ -1,0 +1,112 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  pull_request:
+    paths:
+      - ".github/workflows/release.yml"
+      - "release/**"
+      - "Makefile"
+      - "notices/**"
+      - "requirements.lock"
+      - "requirements-dev.lock"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  TAG: ${{ github.event_name == 'push' && github.ref_name || 'v0.0.0-proof' }}
+
+jobs:
+  linux:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    container:
+      image: python:3.12-slim-bookworm@sha256:935c3c5b12357a7e10caa9c1e6ca5692344d97cf229832ef584be2cec9fc03df
+    steps:
+      - name: Check that Linux bundles the Python patch of the macOS job
+        run: python -c 'import sys; sys.exit(sys.version_info[:3] != (3, 12, 16))'
+      - run: apt-get update && apt-get install --yes --no-install-recommends binutils git make
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - run: make install PYTHON=python
+      - run: make lint test
+      - run: VERSION="${TAG#v}" make archive
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: x86_64-unknown-linux-gnu
+          path: dist/*.tar.gz
+          if-no-files-found: error
+
+  macos:
+    runs-on: macos-15
+    timeout-minutes: 30
+    env:
+      PIP_NO_CACHE_DIR: "1"
+      UV_PYTHON_PREFERENCE: only-managed
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Install uv in a new folder outside the home folder
+        run: |
+          work="$(mktemp -d /private/tmp/meridian-release.XXXXXX)"
+          echo "RELEASE_WORK=$work" >> "$GITHUB_ENV"
+          curl --fail --silent --show-error --location --output "$work/uv.tar.gz" \
+            https://github.com/astral-sh/uv/releases/download/0.13.9/uv-aarch64-apple-darwin.tar.gz
+          echo "5aeca67f2283f75235de40d0bd9c0a5bbc5fce23b6d48b3bf9fa1b2db08382ca  $work/uv.tar.gz" | shasum -a 256 -c -
+          tar -xzf "$work/uv.tar.gz" -C "$work"
+          echo "$work/uv-aarch64-apple-darwin" >> "$GITHUB_PATH"
+          {
+            echo "UV_CACHE_DIR=$work/uv-cache"
+            echo "UV_PYTHON_INSTALL_DIR=$work/python"
+            echo "PYINSTALLER_CONFIG_DIR=$work/pyinstaller"
+          } >> "$GITHUB_ENV"
+      - run: |
+          uv python install --no-bin 3.12.16
+          make install PYTHON="$(uv python find 3.12.16)"
+      - run: VERSION="${TAG#v}" make archive
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: aarch64-apple-darwin
+          path: dist/*.tar.gz
+          if-no-files-found: error
+      - if: always()
+        run: test -z "${RELEASE_WORK:-}" || rm -rf "$RELEASE_WORK"
+
+  publish:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: [linux, macos]
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          path: dist
+          merge-multiple: true
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cd dist
+          {
+            echo "Archives of meridian-provider-sharadar ${TAG#v} for the Meridian plug-in host."
+            echo
+            echo "| Archive | SHA-256 |"
+            echo "| --- | --- |"
+            for file in *.tar.gz; do
+              echo "| \`$file\` | \`$(sha256sum "$file" | awk '{print $1}')\` |"
+            done
+            echo
+            echo "Install: \`meridian-backend plugin install <archive> --sha256 <SHA-256>\`."
+          } > notes.md
+          prerelease=()
+          core="${TAG%%+*}"
+          [[ "$core" == *-* ]] && prerelease=(--prerelease)
+          gh release create "$TAG" *.tar.gz --repo "$GITHUB_REPOSITORY" --verify-tag --draft --title "$TAG" --notes-file notes.md "${prerelease[@]}"

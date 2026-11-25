@@ -1,0 +1,11 @@
+{
+  "meridian_commit": "aa5d0cbc4d0baef662e91cc087d8a15e97a76e3e",
+  "files": {
+    "LICENSE": "f433b1a53f5b830a205fd2df78e2b34974656c7b",
+    "README.md": "9beffacd1957ae18a349f7522e4c8fd870fab050",
+    "market-data/v1/contract.json": "ba38aac690c779faddb6fd235dcdc5cacbb61dd9",
+    "market-data/v1/openapi.json": "fdd4f507564d029375fd9da3c0d62d9338650699",
+    "plugin-runtime/v1/contract.json": "204a33a0dbeca8b1e5658924bc6a8f6f60174014",
+    "plugin-runtime/v1/openapi.json": "631ebf3b7e04270654c10b06e06cfcc7f3a56907"
+  }
+}

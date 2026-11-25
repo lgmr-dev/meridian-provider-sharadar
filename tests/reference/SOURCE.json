@@ -1,0 +1,26 @@
+{
+  "meridian_commit": "aa5d0cbc4d0baef662e91cc087d8a15e97a76e3e",
+  "files": {
+    "desktop/fixture_plugin/pty_run.py": "06a56f64c9d83962668e1af0914552d59156b4b4",
+    "server/__init__.py": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+    "server/platform/__init__.py": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+    "server/platform/config_store.py": "31885c7b40f68f550682e6190dc695706487feb1",
+    "server/platform/http.py": "463f1029503727c874cee2408ef9a2dc920b1784",
+    "server/platform/runtime.py": "7413b079f4f2bd941e3c6f73bfebb660ee520008",
+    "server/platform/sharadar_key.py": "99451a8b191e33e2df228594d7e0ed31afb24157",
+    "server/plugins/__init__.py": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+    "server/plugins/__main__.py": "e5e066158e703ac3ce28134082f07289abf4c07d",
+    "server/plugins/cli.py": "7e4af30571258c4cef01df9edf0a8390d6909cf3",
+    "server/plugins/client.py": "464a7a795e5263122ccdaa86bc2711c9a4cd169e",
+    "server/plugins/contract.py": "7096dd1db1f09493cb30d91d4eeb0690574b2811",
+    "server/plugins/errors.py": "fe6b9b3898c078ef3c01b8bb1b25d2e1668d2853",
+    "server/plugins/host.py": "01610b9151253562cd53f2efa9e5a32ae624cb50",
+    "server/plugins/inventory.py": "c969c89c2e32a46a241b6fe6d71c630d09849284",
+    "server/plugins/launcher.py": "2f06a20b44aba47e48c9ec9cdcc65f9aa69ab8da",
+    "server/plugins/paths.py": "8f756391579cab6d31a66c7b116da6647a5cc30b",
+    "server/plugins/registry.py": "ec7d5bfe4b63da250793a2454c0426993be9959d",
+    "server/sharadar_provider.py": "eeb0ceacbdc6c7ef8386db6fea98f17dda41e251",
+    "server/stock_selection_contract.py": "3a106668ec54710bb5d8dd1c82b69c5ebcd8d791",
+    "server/stock_selection_identity.json": "8cf2bf688d02e0b776b8875853b294e6b935ed49"
+  }
+}

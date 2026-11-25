@@ -1,0 +1,111 @@
+{
+  "version": 1,
+  "features": {
+    "plugin/runtime": {
+      "description": "Process start, stdin handshake, lock, ready line and the loopback HTTP server",
+      "mayUse": [
+        "plugin/operations"
+      ]
+    },
+    "plugin/operations": {
+      "description": "Request checks and the market-data contract mapping of each operation",
+      "mayUse": [
+        "plugin/credentials",
+        "provider/sharadar",
+        "provider/identity"
+      ]
+    },
+    "plugin/credentials": {
+      "description": "Check of a candidate API key for validateCredentials",
+      "mayUse": []
+    },
+    "provider/sharadar": {
+      "description": "The Sharadar provider that Meridian ran in-tree at aa5d0cb",
+      "mayUse": [
+        "provider/identity"
+      ]
+    },
+    "provider/identity": {
+      "description": "Ticker and security-name validators of Meridian at aa5d0cb",
+      "mayUse": []
+    },
+    "meridian/reference": {
+      "description": "Byte copies of Meridian files at aa5d0cb that the tests compare with",
+      "mayUse": []
+    },
+    "tests": {
+      "description": "Test suites. They may use each feature"
+    },
+    "packaging": {
+      "description": "PyInstaller build, release archive, launch proof and host acceptance",
+      "mayUse": [
+        "provider/sharadar",
+        "meridian/reference"
+      ]
+    }
+  },
+  "owners": [
+    {
+      "path": "tests/**",
+      "feature": "tests"
+    },
+    {
+      "path": "tests/reference/**",
+      "feature": "meridian/reference"
+    },
+    {
+      "path": "meridian_provider_sharadar/__init__.py",
+      "feature": "provider/sharadar"
+    },
+    {
+      "path": "meridian_provider_sharadar/provider.py",
+      "feature": "provider/sharadar"
+    },
+    {
+      "path": "meridian_provider_sharadar/identity.py",
+      "feature": "provider/identity"
+    },
+    {
+      "path": "meridian_provider_sharadar/__main__.py",
+      "feature": "plugin/runtime"
+    },
+    {
+      "path": "meridian_provider_sharadar/server.py",
+      "feature": "plugin/runtime"
+    },
+    {
+      "path": "meridian_provider_sharadar/operations.py",
+      "feature": "plugin/operations"
+    },
+    {
+      "path": "meridian_provider_sharadar/encoding.py",
+      "feature": "plugin/operations"
+    },
+    {
+      "path": "meridian_provider_sharadar/credentials.py",
+      "feature": "plugin/credentials"
+    },
+    {
+      "path": "release/**",
+      "feature": "packaging"
+    }
+  ],
+  "extract": [
+    {
+      "tool": "scan",
+      "files": [
+        "**/*.py"
+      ],
+      "roots": [
+        "",
+        "tests/reference"
+      ]
+    }
+  ],
+  "ignore": [
+    ".venv/**",
+    "tools/featuremap/**",
+    "build/**",
+    "dist/**"
+  ]
+}

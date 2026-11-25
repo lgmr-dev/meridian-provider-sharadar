@@ -1,0 +1,13 @@
+certifi==2026.10.19
+charset-normalizer==3.4.7
+idna==3.17
+inflection==0.5.1
+more-itertools==11.1.0
+nasdaq-data-link==1.0.4
+numpy==2.4.6
+pandas==3.0.3
+python-dateutil==2.9.0.post0
+requests==2.34.2
+six==1.17.0
+urllib3==2.8.0
+tzdata==2026.2 ; sys_platform == 'emscripten' or sys_platform == 'win32'
